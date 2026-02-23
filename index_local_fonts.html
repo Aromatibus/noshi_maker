@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>熨斗メーカー</title>
+
+  <style>
+    :root {
+      --bg-color: #eee;
+      --panel-color: #fff;
+      --accent-color: #ff8000;
+      --border-color: #ddd;
+
+      --w-label: 90px;
+      --w-main: 700px;
+      --w-size: 200px;
+      --w-pos-y: 200px;
+      --w-pos-x: 200px;
+    }
+
+    /* フォントファイルの読み込み定義 */
+    @font-face { font-family: 'ACGyosyo'; src: url('static/fonts/acgyosyo.ttf') format('truetype'); }
+    @font-face { font-family: 'ACKaisyo'; src: url('static/fonts/ackaisyo.ttf') format('truetype'); }
+    @font-face { font-family: 'HannariMincho'; src: url('static/fonts/HannariMincho-Regular.otf') format('opentype'); }
+    @font-face { font-family: 'IPAmP'; src: url('static/fonts/ipamp.ttf') format('truetype'); }
+    @font-face { font-family: 'YujiSyukuLocal'; src: url('static/fonts/YujiSyuku-Regular.ttf') format('truetype'); }
+    @font-face { font-family: 'ZenAntiqueLocal'; src: url('static/fonts/ZenAntique-Regular.ttf') format('truetype'); }
+
+    body {
+      margin: 0;
+      background: var(--bg-color);
+      font-family: sans-serif;
+      font-size: 12px;
+    }
+
+    /* ツールバー設定 */
+    #toolbar {
+      background: var(--panel-color);
+      padding: 5px 25px 10px 25px;
+      border-bottom: 2px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .header-area {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      height: 28px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 8px;
+    }
+
+    .main-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--accent-color);
+      margin: 0;
+    }
+
+    .copyright {
+      font-size: 10px;
+      color: #999;
+    }
+
+    /* 入力行のグリッド設定 */
+    .row {
+      display: grid;
+      grid-template-columns:
+        var(--w-label)
+        var(--w-main)
+        var(--w-size)
+        var(--w-pos-y)
+        var(--w-pos-x);
+      align-items: center;
+      height: 32px;
+      gap: 15px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .row:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+
+    .group-label {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    .item-name {
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    /* プレビュー用紙設定 */
+    #paper {
+      width: 297mm;
+      height: 210mm;
+      background: #fff;
+      margin: 20px auto;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 25px rgba(0,0,0,0.15);
+      transform: scale(0.8);
+      transform-origin: top center;
+    }
+
+    .vtext {
+      writing-mode: vertical-rl;
+      position: absolute;
+      white-space: pre;
+      line-height: 1.1;
+    }
+
+    #canvas_omotegaki { z-index: 100; }
+    #canvas_okurinushi { z-index: 80; }
+    #noshi_img { z-index: 60; position: absolute; pointer-events: none; }
+    #mizuhiki_img { z-index: 40; position: absolute; pointer-events: none; }
+
+    /* フォーム要素スタイル */
+    input[type="number"] {
+      width: 40px;
+      height: 24px;
+      border: 1px solid #bbb;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    input[type="range"] {
+      width: 100px;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .ok-input {
+      width: 120px;
+      height: 28px;
+      border: 1px solid #bbb;
+      font-size: 13px;
+      padding: 0 5px;
+    }
+
+    select {
+      height: 30px;
+      border: 1px solid #bbb;
+      font-size: 13px;
+      padding: 0 8px;
+    }
+
+    #ui_om_text {
+      width: 120px;
+      height: 24px;
+      border: 1px solid #bbb;
+      font-size: 13px;
+    }
+
+    .btn-print {
+      background: var(--accent-color);
+      color: #fff;
+      border: none;
+      padding: 6px 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 4px;
+    }
+
+    /* 印刷用設定 */
+    @media print {
+      @page { size: A4 landscape; margin: 0; }
+      body { background: white; }
+      #toolbar { display: none !important; }
+      #paper {
+        margin: 0;
+        border: none;
+        box-shadow: none;
+        transform: scale(1.0) !important;
+      }
+    }
+
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .loaded #loading-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.2s;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toolbar">
+    <div class="header-area">
+      <h1 class="main-title">熨斗メーカー</h1>
+      <span class="copyright">© 2026 Aromatibus.</span>
+      <button class="btn-print" onclick="window.print()" style="margin-left: auto;">印 刷</button>
+    </div>
+
+    <div class="row">
+      <span class="group-label">表書き</span>
+      <div class="group">
+        <select id="ui_purpose_sel"></select>
+        <input id="ui_om_text" placeholder="内容入力">
+        <span class="item-name">書体:</span>
+          <select id="ui_font_sel" style="width:130px">
+            <option value="'YujiSyukuLocal', serif">Yuji Syuku</option>
+            <option value="'ACGyosyo', serif">AC行書</option>
+            <option value="'ACKaisyo', serif">AC楷書</option>
+            <option value="'HannariMincho', serif">はんなり明朝</option>
+            <option value="'IPAmP', serif">IPA明朝</option>
+            <option value="'ZenAntiqueLocal', serif">Zen Antique</option>
+          </select>
+        </div>
+      <div class="group">
+        <span class="item-name">サイズ:</span>
+        <input type="range" id="ui_om_size_r" min="0" max="800" value="80">
+        <input type="number" id="ui_om_size" value="80">
+      </div>
+      <div class="group">
+        <span class="item-name">縦位置</span>
+        <input type="range" id="ui_om_y_r" min="-10" max="300" value="20">
+        <input type="number" id="ui_om_y" value="20">
+      </div>
+      <div class="group">
+        <span class="item-name">横位置</span>
+        <input type="range" id="ui_om_x_r" min="0" max="420" value="136">
+        <input type="number" id="ui_om_x" value="136">
+      </div>    </div>
+
+    <div class="row">
+      <span class="group-label">贈り主</span>
+      <div class="group">
+        <input class="ok-input" placeholder="氏名1">
+        <input class="ok-input" placeholder="氏名2">
+        <input class="ok-input" placeholder="氏名3">
+        <input class="ok-input" placeholder="氏名4">
+        <input class="ok-input" placeholder="氏名5">
+      </div>
+      <div class="group">
+        <span class="item-name">サイズ:</span>
+        <input type="range" id="ui_ok_size_r" min="0" max="800" value="40">
+        <input type="number" id="ui_ok_size" value="40">
+      </div>
+      <div class="group">
+        <span class="item-name">縦位置</span>
+        <input type="range" id="ui_ok_y_r" min="-10" max="300" value="110">
+        <input type="number" id="ui_ok_y" value="110">
+      </div>
+      <div class="group">
+        <span class="item-name">横位置</span>
+        <input type="range" id="ui_ok_x_r" min="0" max="280" value="141">
+        <input type="number" id="ui_ok_x" value="141">
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="group-label">熨斗</span>
+      <div class="group">
+        <select id="ui_noshi_sel" style="width:180px"></select>
+      </div>
+      <div class="group">
+        <span class="item-name">サイズ:</span>
+        <input type="range" id="ui_n_w_r" min="5" max="80" value="16">
+        <input type="number" id="ui_n_w" value="16">
+      </div>
+      <div class="group">
+        <span class="item-name">縦位置</span>
+        <input type="range" id="ui_n_y_r" min="0" max="200" value="10">
+        <input type="number" id="ui_n_y" value="10">
+      </div>
+      <div class="group">
+        <span class="item-name">横位置</span>
+        <input type="range" id="ui_n_x_r" min="0" max="280" value="175">
+        <input type="number" id="ui_n_x" value="175">
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="group-label">水引</span>
+      <div class="group">
+        <select id="ui_mizuhiki_sel" style="width:180px"></select>
+      </div>
+      <div class="group">
+        <span class="item-name">サイズ:</span>
+        <input type="range" id="ui_m_w_r" min="200" max="1000" value="320">
+        <input type="number" id="ui_m_w" value="320">
+      </div>
+      <div class="group">
+        <span class="item-name">縦位置</span>
+        <input type="range" id="ui_m_y_r" min="-20" max="160" value="40">
+        <input type="number" id="ui_m_y" value="40">
+      </div>
+      <div class="group">
+        <span class="item-name">横位置</span>
+        <input type="range" id="ui_m_x_r" min="-120" max="100" value="0">
+        <input type="number" id="ui_m_x" value="0">
+      </div>
+    </div>
+  </div>
+
+  <div id="paper">
+    <img id="mizuhiki_img">
+    <img id="noshi_img">
+    <div id="canvas_okurinushi" class="vtext"></div>
+    <div id="canvas_omotegaki" class="vtext"></div>
+  </div>
+
+  <script>
+    /** 1. 設定データ **/
+
+  // 表書きの選択肢リスト
+  const LIST_PURPOSE = [
+    { label: "寿",                          value: "寿" },
+    { label: "御祝",                        value: "御祝" },
+    { label: "内祝",                        value: "内祝" },
+    { label: "御挨拶",                      value: "御挨拶" },
+    { label: "御礼",                        value: "御礼" },
+    { label: "謝礼（目上の人への御礼）",    value: "謝礼" },
+    { label: "寸志（目上から目下の人へ）",  value: "寸志" },
+    { label: "粗品（ちょっとした贈り物）",  value: "粗品" },
+    { label: "奉納（お祭りなどの感謝）",    value: "奉納" },
+    { label: "奉献（地鎮祭・行事など）",    value: "奉献" },
+
+    { label: "御年賀",                      value: "御年賀" },
+    { label: "御中元",                      value: "御中元" },
+    { label: "御歳暮",                      value: "御歳暮" },
+    { label: "暑中御見舞",                  value: "暑中御見舞" },
+    { label: "残暑御見舞",                  value: "残暑御見舞" },
+    { label: "寒中御見舞",                  value: "寒中御見舞" },
+    { label: "〇〇賞",                      value: "〇〇賞" },
+
+    { label: "入学祝",                      value: "祝御入学" },
+    { label: "入学祝のお返し",              value: "入学内祝" },
+    { label: "卒業祝",                      value: "祝御卒業" },
+    { label: "卒業祝のお返し",              value: "卒業内祝" },
+    { label: "成人式のお祝い",              value: "祝御成人" },
+    { label: "成人祝のお返し",              value: "成人内祝" },
+
+    { label: "父の日",                      value: "父の日御祝" },
+    { label: "母の日",                      value: "母の日御祝" },
+    { label: "敬老の日",                    value: "敬老の日御祝" },
+
+    { label: "長寿祝：寿福",                value: "寿福" },
+    { label: "長寿祝：祝御長寿（丁寧）",    value: "祝御長寿" },
+    { label: "長寿祝：賀寿（古希など）",    value: "賀寿" },
+    { label: "還暦祝（６０歳）",            value: "祝還暦" },
+    { label: "古希祝（７０歳）",            value: "御古希御祝" },
+    { label: "喜寿祝（７７歳）",            value: "御喜寿御祝" },
+    { label: "傘寿祝（８０歳）",            value: "御傘寿御祝" },
+    { label: "米寿祝（８８歳）",            value: "御米寿御祝" },
+    { label: "卒寿祝（９０歳）",            value: "御卒寿御祝" },
+    { label: "白寿祝（９９歳）",            value: "御白寿御祝" },
+
+    { label: "結婚祝",                      value: "御結婚御祝" },
+    { label: "結婚祝のお返し",              value: "内祝" },
+    { label: "出産祝",                      value: "御出産御祝" },
+    { label: "出産祝のお返し（名入り）",    value: "出産内祝（生まれた子供の名前）" },
+    { label: "命名祝",                      value: "祝命名" },
+    { label: "命名御礼",                    value: "命名御礼" },
+
+    { label: "新築祝",                      value: "新築御祝" },
+    { label: "新築祝のお返し",              value: "新築記念" },
+    { label: "開店祝",                      value: "御祝" },
+    { label: "引越し挨拶",                  value: "御挨拶" },
+
+    { label: "病気や怪我など",              value: "御見舞" },
+    { label: "御見舞のお返し（完治）",      value: "快気祝" },
+    { label: "御見舞のお返し（療養）",      value: "快気内祝" },
+
+    { label: "法要供え物（一般）",          value: "御供" },
+    { label: "法要供え物（四十九日以降）",  value: "御仏前" },
+    { label: "通夜・お葬式",                value: "御霊前" },
+    { label: "香典返し",                    value: "偲び草" },
+    { label: "法要・香典（主に東日本）",    value: "志" },
+    { label: "法要・香典（主に西日本）",    value: "粗供養" }
+  ];
+
+  // 熨斗（のし）画像リスト
+  const LIST_NOSHI = [
+    { label: "紺",          path: "static/noshi/NOSHI_KON.png" },
+    { label: "赤",          path: "static/noshi/NOSHI_RED.png" },
+    { label: "なし",        path: "" }
+  ];
+
+  // 水引画像リスト
+  const LIST_MIZUHIKI = [
+    { label: "花結び赤",    path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_RED.png" },
+    { label: "あわじ赤",    path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_RED.png" },
+    { label: "結び切り赤",  path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_RED.png" },
+    { label: "赤棒",        path: "static/mizuhiki/A3_MIZUHIKI_AKABOU.png" },
+    { label: "花結び金",    path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_GOLD.png" },
+    { label: "あわじ金",    path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_GOLD.png" },
+    { label: "結び切り金",  path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_GOLD.png" },
+    { label: "花結び黒",    path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_BLACK.png" },
+    { label: "あわじ黒",    path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_BLACK.png" },
+    { label: "結び切り黒",  path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_BLACK.png" },
+    { label: "なし",        path: "" }
+  ];
+
+    const getEl = (id) => document.getElementById(id);
+
+    /** 2. 初期化処理 **/
+    function initSelectors() {
+      const pSel = getEl("ui_purpose_sel");
+      LIST_PURPOSE.forEach(d => pSel.add(new Option(d.label, d.value)));
+      getEl("ui_om_text").value = LIST_PURPOSE[0].value;
+
+      const nSel = getEl("ui_noshi_sel");
+      LIST_NOSHI.forEach(d => nSel.add(new Option(d.label, d.path)));
+
+      const mSel = getEl("ui_mizuhiki_sel");
+      LIST_MIZUHIKI.forEach(d => mSel.add(new Option(d.label, d.path)));
+    }
+
+    /** 3. 同期処理 **/
+    function bindSync(rangeId, numId, callback) {
+      const r = getEl(rangeId);
+      const n = getEl(numId);
+      if (!r || !n) return;
+
+      const syncFn = (e) => {
+        if (e.target === r) n.value = r.value;
+        else r.value = n.value;
+        callback();
+      };
+      r.addEventListener("input", syncFn);
+      n.addEventListener("input", syncFn);
+    }
+
+    /** 4. 描画処理 **/
+    function render() {
+      const currentFont = getEl("ui_font_sel").value;
+
+      // 4-1. 表書き
+      const omView = getEl("canvas_omotegaki");
+      omView.textContent = getEl("ui_om_text").value;
+      omView.style.left = getEl("ui_om_x").value + "mm";
+      omView.style.top = getEl("ui_om_y").value + "mm";
+      omView.style.fontSize = getEl("ui_om_size").value + "px";
+      omView.style.fontFamily = currentFont;
+
+      // 4-2. 贈り主
+      const okView = getEl("canvas_okurinushi");
+      const names = Array.from(document.querySelectorAll(".ok-input"))
+        .map(i => i.value)
+        .filter(v => v);
+      okView.textContent = names.join("\n");
+      okView.style.left = getEl("ui_ok_x").value + "mm";
+      okView.style.top = getEl("ui_ok_y").value + "mm";
+      okView.style.fontSize = getEl("ui_ok_size").value + "px";
+      okView.style.fontFamily = currentFont;
+
+      // 4-3. 熨斗
+      const nImg = getEl("noshi_img");
+      const nPath = getEl("ui_noshi_sel").value;
+      if (nPath) {
+        nImg.src = nPath;
+        nImg.style.display = "block";
+        nImg.style.left = getEl("ui_n_x").value + "mm";
+        nImg.style.top = getEl("ui_n_y").value + "mm";
+        nImg.style.width = getEl("ui_n_w").value + "mm";
+      } else {
+        nImg.style.display = "none";
+      }
+
+      // 4-4. 水引
+      const mImg = getEl("mizuhiki_img");
+      mImg.src = getEl("ui_mizuhiki_sel").value;
+      mImg.style.left = `calc(50% + ${getEl("ui_m_x").value}mm)`;
+      mImg.style.top = getEl("ui_m_y").value + "mm";
+      mImg.style.width = getEl("ui_m_w").value + "mm";
+      mImg.style.transform = "translateX(-50%)";
+    }
+
+    /** 5. イベント設定 **/
+    function initEvents() {
+      getEl("ui_purpose_sel").addEventListener("change", (e) => {
+        getEl("ui_om_text").value = e.target.value;
+        render();
+      });
+
+      getEl("ui_om_text").addEventListener("input", render);
+      getEl("ui_font_sel").addEventListener("change", render);
+      getEl("ui_noshi_sel").addEventListener("change", render);
+      getEl("ui_mizuhiki_sel").addEventListener("change", render);
+
+      document.querySelectorAll(".ok-input").forEach(el => {
+        el.addEventListener("input", render);
+      });
+
+      const syncPairs = [
+        ["ui_om_x_r", "ui_om_x"], ["ui_om_y_r", "ui_om_y"], ["ui_om_size_r", "ui_om_size"],
+        ["ui_ok_x_r", "ui_ok_x"], ["ui_ok_y_r", "ui_ok_y"], ["ui_ok_size_r", "ui_ok_size"],
+        ["ui_n_x_r", "ui_n_x"], ["ui_n_y_r", "ui_n_y"], ["ui_n_w_r", "ui_n_w"],
+        ["ui_m_x_r", "ui_m_x"], ["ui_m_y_r", "ui_m_y"], ["ui_m_w_r", "ui_m_w"]
+      ];
+      syncPairs.forEach(pair => bindSync(pair[0], pair[1], render));
+    }
+
+    // 実行
+    initSelectors();
+    initEvents();
+
+    document.fonts.ready.then(() => {
+      document.body.classList.add('loaded');
+      render();
+    });
+  </script>
+
+</body>
+</html>
