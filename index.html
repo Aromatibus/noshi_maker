@@ -22,6 +22,9 @@
       --w-size: 200px;
       --w-pos-y: 200px;
       --w-pos-x: 200px;
+
+      /* 画面表示用の倍率設定 */
+      --display-scale: 0.8;
     }
 
     body {
@@ -128,7 +131,7 @@
       position: relative;
       overflow: hidden;
       box-shadow: 0 0 25px rgba(0,0,0,0.15);
-      transform: scale(0.8);
+      transform: scale(var(--display-scale));
       transform-origin: top center;
     }
 
