@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>熨斗メーカー - プロ仕様拡張版</title>
+  <title>熨斗メーカー - プロ仕様 完全拡張版</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -45,7 +45,7 @@
       display: flex;
       align-items: center;
       gap: 15px;
-      height: 32px;
+      height: 40px;
       border-bottom: 1px solid #eee;
       margin-bottom: 8px;
     }
@@ -57,13 +57,23 @@
       margin: 0;
     }
 
-    /* 用紙・印刷設定エリア */
-    .print-settings {
+    /* 用紙・印刷設定（印刷ボタンに隣接） */
+    .header-right-group {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
       margin-left: auto;
+    }
+
+    .print-settings-label {
       font-size: 11px;
+      font-weight: bold;
+      color: #666;
+    }
+
+    .copyright {
+      font-size: 10px;
+      color: #999;
     }
 
     /* 入力行のグリッド設定 */
@@ -80,6 +90,11 @@
       gap: 15px;
       border-bottom: 1px solid #f0f0f0;
       padding: 2px 0;
+    }
+
+    .row:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
     }
 
     .group {
@@ -113,6 +128,7 @@
       position: relative;
       overflow: hidden;
       box-shadow: 0 0 25px rgba(0,0,0,0.15);
+      transform: scale(0.8);
       transform-origin: top center;
     }
 
@@ -135,16 +151,47 @@
     #mizuhiki_img { z-index: 40; position: absolute; }
 
     /* フォーム要素スタイル */
-    input[type="number"] { width: 45px; height: 24px; border: 1px solid #bbb; text-align: center; }
-    input[type="range"] { width: 100px; cursor: pointer; }
-    .ok-input { width: 100px; height: 24px; border: 1px solid #bbb; padding: 0 5px; }
-    select { height: 30px; border: 1px solid #bbb; padding: 0 8px; }
+    input[type="number"] {
+      width: 45px;
+      height: 24px;
+      border: 1px solid #bbb;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    input[type="range"] {
+      width: 100px;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .ok-input {
+      width: 100px;
+      height: 28px;
+      border: 1px solid #bbb;
+      font-size: 13px;
+      padding: 0 5px;
+    }
+
+    select {
+      height: 30px;
+      border: 1px solid #bbb;
+      font-size: 13px;
+      padding: 0 8px;
+    }
+
+    #ui_om_text {
+      width: 120px;
+      height: 24px;
+      border: 1px solid #bbb;
+      font-size: 13px;
+    }
 
     .btn-print {
       background: var(--accent-color);
       color: #fff;
       border: none;
-      padding: 6px 20px;
+      padding: 6px 25px;
       cursor: pointer;
       font-size: 13px;
       font-weight: bold;
@@ -155,7 +202,7 @@
       background: #666;
       color: #fff;
       border: none;
-      padding: 2px 8px;
+      padding: 3px 8px;
       font-size: 10px;
       cursor: pointer;
       border-radius: 3px;
@@ -163,7 +210,10 @@
 
     /* 印刷用設定 */
     @media print {
-      @page { margin: 0; }
+      @page { 
+        size: auto; /* JSで動的に設定 */
+        margin: 0; 
+      }
       body { background: white; }
       #toolbar { display: none !important; }
       #paper-container { padding: 0; display: block; }
@@ -185,7 +235,12 @@
       align-items: center;
       z-index: 9999;
     }
-    .loaded #loading-overlay { opacity: 0; pointer-events: none; transition: 0.2s; }
+
+    .loaded #loading-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.2s;
+    }
   </style>
 </head>
 <body>
@@ -195,22 +250,22 @@
   <div id="toolbar">
     <div class="header-area">
       <h1 class="main-title">熨斗メーカー</h1>
+      <span class="copyright">© 2026 Aromatibus.</span>
       
-      <div class="print-settings">
-        <span>用紙:</span>
-        <select id="ui_paper_size">
+      <div class="header-right-group">
+        <span class="print-settings-label">用紙サイズ:</span>
+        <select id="ui_paper_size" style="height: 28px;">
           <option value="297,210">A4 (横)</option>
           <option value="210,297">A4 (縦)</option>
           <option value="420,297">A3 (横)</option>
           <option value="364,257">B4 (横)</option>
           <option value="257,182">B5 (横)</option>
         </select>
-        <span>印刷倍率:</span>
-        <input type="number" id="ui_print_scale" value="100" min="10" max="200"> %
-        <span style="color:#999; margin-left:10px;">※プレビュー上の文字・画像を直接ドラッグで移動できます</span>
+        <span class="print-settings-label">印刷倍率:</span>
+        <input type="number" id="ui_print_scale" value="100" min="10" max="200" style="height: 24px;">
+        <span class="print-settings-label">%</span>
+        <button class="btn-print" onclick="window.print()">印 刷</button>
       </div>
-
-      <button class="btn-print" onclick="window.print()" style="margin-left: auto;">印 刷</button>
     </div>
 
     <!-- 表書き行 -->
@@ -218,19 +273,20 @@
       <span class="group-label">表書き</span>
       <div class="group">
         <select id="ui_purpose_sel"></select>
-        <input id="ui_om_text" placeholder="内容入力" style="width:120px; height:24px;">
+        <input id="ui_om_text" placeholder="内容入力">
         <span class="item-name">書体:</span>
-        <select id="ui_font_sel" style="width:140px">
+        <select id="ui_font_sel" style="width:130px">
           <optgroup label="Webフォント">
             <option value="'Yuji Syuku', serif">Yuji Syuku</option>
             <option value="'Zen Antique', serif">Zen Antique</option>
             <option value="'Hannari', serif">Hannari</option>
           </optgroup>
           <optgroup label="システムフォント" id="optgroup_system">
-            <!-- ここにローカルフォントが追加される -->
+            <!-- ここに追加される -->
           </optgroup>
         </select>
-        <button class="btn-sysfont" id="btn_load_fonts">システムフォントを読込</button>
+        <button class="btn-sysfont" id="btn_manual_font">フォント手入力</button>
+        <button class="btn-sysfont" id="btn_load_fonts">システム読込</button>
       </div>
       <div class="group">
         <span class="item-name">サイズ:</span>
@@ -249,7 +305,7 @@
       </div>
     </div>
 
-    <!-- 贈り主行 -->
+    <!-- 贈り主行 (5名分維持) -->
     <div class="row">
       <span class="group-label">贈り主</span>
       <div class="group">
@@ -284,7 +340,7 @@
       </div>
       <div class="group">
         <span class="item-name">サイズ:</span>
-        <input type="range" id="ui_n_w_r" min="5" max="200" value="16">
+        <input type="range" id="ui_n_w_r" min="5" max="150" value="16">
         <input type="number" id="ui_n_w" value="16">
       </div>
       <div class="group">
@@ -333,66 +389,92 @@
   </div>
 
   <script>
-    /** 1. 設定データ（すべて保持） **/
+    /** 1. 設定データ (すべての項目を完全に保持) **/
+
     const LIST_PURPOSE = [
-      { label: "寿", value: "寿" }, { label: "御祝", value: "御祝" }, { label: "内祝", value: "内祝" },
-      { label: "御挨拶", value: "御挨拶" }, { label: "御礼", value: "御礼" }, { label: "謝礼", value: "謝礼" },
-      { label: "寸志", value: "寸志" }, { label: "粗品", value: "粗品" }, { label: "奉納", value: "奉納" },
-      { label: "奉献", value: "奉献" }, { label: "御年賀", value: "御年賀" }, { label: "御中元", value: "御中元" },
-      { label: "御歳暮", value: "御歳暮" }, { label: "暑中御見舞", value: "暑中御見舞" }, { label: "残暑御見舞", value: "残暑御見舞" },
-      { label: "寒中御見舞", value: "寒中御見舞" }, { label: "〇〇賞", value: "〇〇賞" }, { label: "祝御入学", value: "祝御入学" },
-      { label: "入学内祝", value: "入学内祝" }, { label: "祝御卒業", value: "祝御卒業" }, { label: "卒業内祝", value: "卒業内祝" },
-      { label: "祝御成人", value: "祝御成人" }, { label: "成人内祝", value: "成人内祝" }, { label: "父の日御祝", value: "父の日御祝" },
-      { label: "母の日御祝", value: "母の日御祝" }, { label: "敬老の日御祝", value: "敬老の日御祝" }, { label: "寿福", value: "寿福" },
-      { label: "祝御長寿", value: "祝御長寿" }, { label: "賀寿", value: "賀寿" }, { label: "祝還暦", value: "祝還暦" },
-      { label: "御古希御祝", value: "御古希御祝" }, { label: "御喜寿御祝", value: "御喜寿御祝" }, { label: "御傘寿御祝", value: "御傘寿御祝" },
-      { label: "御米寿御祝", value: "御米寿御祝" }, { label: "御卒寿御祝", value: "御卒寿御祝" }, { label: "御白寿御祝", value: "御白寿御祝" },
-      { label: "御結婚御祝", value: "御結婚御祝" }, { label: "御出産御祝", value: "御出産御祝" }, { label: "出産内祝", value: "出産内祝" },
-      { label: "祝命名", value: "祝命名" }, { label: "命名御礼", value: "命名御礼" }, { label: "新築御祝", value: "新築御祝" },
-      { label: "新築記念", value: "新築記念" }, { label: "御見舞", value: "御見舞" }, { label: "快気祝", value: "快気祝" },
-      { label: "快気内祝", value: "快気内祝" }, { label: "御供", value: "御供" }, { label: "御仏前", value: "御仏前" },
-      { label: "御霊前", value: "御霊前" }, { label: "偲び草", value: "偲び草" }, { label: "志", value: "志" }, { label: "粗供養", value: "粗供養" }
+      { label: "寿",                          value: "寿" },
+      { label: "御祝",                        value: "御祝" },
+      { label: "内祝",                        value: "内祝" },
+      { label: "御挨拶",                      value: "御挨拶" },
+      { label: "御礼",                        value: "御礼" },
+      { label: "謝礼（目上の人への御礼）",    value: "謝礼" },
+      { label: "寸志（目上から目下の人へ）",  value: "寸志" },
+      { label: "粗品（ちょっとした贈り物）",  value: "粗品" },
+      { label: "奉納（お祭りなどの感謝）",    value: "奉納" },
+      { label: "奉献（地鎮祭・行事など）",    value: "奉献" },
+      { label: "御年賀",                      value: "御年賀" },
+      { label: "御中元",                      value: "御中元" },
+      { label: "御歳暮",                      value: "御歳暮" },
+      { label: "暑中御見舞",                  value: "暑中御見舞" },
+      { label: "残暑御見舞",                  value: "残暑御見舞" },
+      { label: "寒中御見舞",                  value: "寒中御見舞" },
+      { label: "〇〇賞",                      value: "〇〇賞" },
+      { label: "入学祝",                      value: "祝御入学" },
+      { label: "入学祝のお返し",              value: "入学内祝" },
+      { label: "卒業祝",                      value: "祝御卒業" },
+      { label: "卒業祝のお返し",              value: "卒業内祝" },
+      { label: "成人式のお祝い",              value: "祝御成人" },
+      { label: "成人祝のお返し",              value: "成人内祝" },
+      { label: "父の日",                      value: "父の日御祝" },
+      { label: "母の日",                      value: "母の日御祝" },
+      { label: "敬老の日",                    value: "敬老の日御祝" },
+      { label: "長寿祝：寿福",                value: "寿福" },
+      { label: "長寿祝：祝御長寿（丁寧）",    value: "祝御長寿" },
+      { label: "長寿祝：賀寿（古希など）",    value: "賀寿" },
+      { label: "還暦祝（６０歳）",            value: "祝還暦" },
+      { label: "古希祝（７０歳）",            value: "御古希御祝" },
+      { label: "喜寿祝（７７歳）",            value: "御喜寿御祝" },
+      { label: "傘寿祝（８０歳）",            value: "御傘寿御祝" },
+      { label: "米寿祝（８８歳）",            value: "御米寿御祝" },
+      { label: "卒寿祝（９０歳）",            value: "御卒寿御祝" },
+      { label: "白寿祝（９９歳）",            value: "御白寿御祝" },
+      { label: "結婚祝",                      value: "御結婚御祝" },
+      { label: "結婚祝のお返し",              value: "内祝" },
+      { label: "出産祝",                      value: "御出産御祝" },
+      { label: "出産祝のお返し（名入り）",    value: "出産内祝（生まれた子供の名前）" },
+      { label: "命名祝",                      value: "祝命名" },
+      { label: "命名御礼",                    value: "命名御礼" },
+      { label: "新築祝",                      value: "新築御祝" },
+      { label: "新築祝のお返し",              value: "新築記念" },
+      { label: "開店祝",                      value: "御祝" },
+      { label: "引越し挨拶",                  value: "御挨拶" },
+      { label: "病気や怪我など",              value: "御見舞" },
+      { label: "御見舞のお返し（完治）",      value: "快気祝" },
+      { label: "御見舞のお返し（療養）",      value: "快気内祝" },
+      { label: "法要供え物（一般）",          value: "御供" },
+      { label: "法要供え物（四十九日以降）",  value: "御仏前" },
+      { label: "通夜・お葬式",                value: "御霊前" },
+      { label: "香典返し",                    value: "偲び草" },
+      { label: "法要・香典（主に東日本）",    value: "志" },
+      { label: "法要・香典（主に西日本）",    value: "粗供養" }
     ];
 
     const LIST_NOSHI = [
-      { label: "紺", path: "static/noshi/NOSHI_KON.png" },
-      { label: "赤", path: "static/noshi/NOSHI_RED.png" },
-      { label: "なし", path: "" }
+      { label: "紺",          path: "static/noshi/NOSHI_KON.png" },
+      { label: "赤",          path: "static/noshi/NOSHI_RED.png" },
+      { label: "なし",        path: "" }
     ];
 
     const LIST_MIZUHIKI = [
-      { label: "花結び赤", path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_RED.png" },
-      { label: "あわじ赤", path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_RED.png" },
-      { label: "結び切り赤", path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_RED.png" },
-      { label: "赤棒", path: "static/mizuhiki/A3_MIZUHIKI_AKABOU.png" },
-      { label: "花結び金", path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_GOLD.png" },
-      { label: "あわじ金", path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_GOLD.png" },
-      { label: "結び切り金", path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_GOLD.png" },
-      { label: "花結び黒", path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_BLACK.png" },
-      { label: "あわじ黒", path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_BLACK.png" },
-      { label: "結び切り黒", path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_BLACK.png" },
-      { label: "なし", path: "" }
+      { label: "花結び赤",    path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_RED.png" },
+      { label: "あわじ赤",    path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_RED.png" },
+      { label: "結び切り赤",  path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_RED.png" },
+      { label: "赤棒",        path: "static/mizuhiki/A3_MIZUHIKI_AKABOU.png" },
+      { label: "花結び金",    path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_GOLD.png" },
+      { label: "あわじ金",    path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_GOLD.png" },
+      { label: "結び切り金",  path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_GOLD.png" },
+      { label: "花結び黒",    path: "static/mizuhiki/A3_MIZUHIKI_HANAMUSUBI_BLACK.png" },
+      { label: "あわじ黒",    path: "static/mizuhiki/A3_MIZUHIKI_AWAJI_BLACK.png" },
+      { label: "結び切り黒",  path: "static/mizuhiki/A3_MIZUHIKI_MUSUBIKIRI_BLACK.png" },
+      { label: "なし",        path: "" }
     ];
 
     const getEl = (id) => document.getElementById(id);
 
-    /** 2. 初期化処理 **/
-    function initSelectors() {
-      const pSel = getEl("ui_purpose_sel");
-      LIST_PURPOSE.forEach(d => pSel.add(new Option(d.label, d.value)));
-      getEl("ui_om_text").value = LIST_PURPOSE[0].value;
-
-      const nSel = getEl("ui_noshi_sel");
-      LIST_NOSHI.forEach(d => nSel.add(new Option(d.label, d.path)));
-
-      const mSel = getEl("ui_mizuhiki_sel");
-      LIST_MIZUHIKI.forEach(d => mSel.add(new Option(d.label, d.path)));
-    }
-
-    /** 3. フォント取得機能 **/
-    async function loadLocalFonts() {
-      if (!('queryLocalFonts' in window)) {
-        alert("お使いのブラウザはローカルフォントの取得に対応していません。(Chrome/Edge等でご利用ください)");
+    /** 2. フォント機能 **/
+    async function loadSystemFonts() {
+      if (!window.queryLocalFonts) {
+        alert("ブラウザがAPIに対応していないか、非セキュアな環境です。手入力を使用してください。");
         return;
       }
       try {
@@ -403,8 +485,33 @@
         families.forEach(f => group.add(new Option(f, f)));
         alert(families.length + "個のフォントを読み込みました。");
       } catch (err) {
-        alert("フォント読み込みに失敗しました。");
+        alert("フォントへのアクセスが拒否されました。");
       }
+    }
+
+    function addManualFont() {
+      const name = prompt("PCに入っているフォント名を入力してください\n(例: MS Mincho, HG行書体, 游明朝)");
+      if (name) {
+        const group = getEl("optgroup_system");
+        const opt = new Option(name, name);
+        opt.style.fontFamily = name;
+        group.add(opt);
+        getEl("ui_font_sel").value = name;
+        render();
+      }
+    }
+
+    /** 3. 初期化処理 **/
+    function initSelectors() {
+      const pSel = getEl("ui_purpose_sel");
+      LIST_PURPOSE.forEach(d => pSel.add(new Option(d.label, d.value)));
+      getEl("ui_om_text").value = LIST_PURPOSE[0].value;
+
+      const nSel = getEl("ui_noshi_sel");
+      LIST_NOSHI.forEach(d => nSel.add(new Option(d.label, d.path)));
+
+      const mSel = getEl("ui_mizuhiki_sel");
+      LIST_MIZUHIKI.forEach(d => mSel.add(new Option(d.label, d.path)));
     }
 
     /** 4. 同期処理 **/
@@ -429,11 +536,9 @@
       paper.style.width = wMm + "mm";
       paper.style.height = hMm + "mm";
 
+      // 印刷用スケール変数のセット
       const printScale = getEl("ui_print_scale").value / 100;
       paper.style.setProperty("--print-scale", printScale);
-      
-      // プレビューの見た目上の拡大
-      paper.style.transform = `scale(0.8)`; 
 
       const currentFont = getEl("ui_font_sel").value;
 
@@ -482,7 +587,7 @@
     function initDragAndDrop() {
       let activeEl = null;
       let startX, startY, startValX, startValY;
-      const mmToPx = 3.78; // 1mm = 約3.78px
+      const mmToPx = 3.78; // 1mm = 3.78px (96dpi)
 
       const onStart = (e) => {
         activeEl = e.target.closest('.draggable');
@@ -491,7 +596,6 @@
         startX = e.clientX;
         startY = e.clientY;
 
-        // 対象に応じたIDの接頭辞を判定
         let prefix = "";
         if (activeEl.id === "canvas_omotegaki") prefix = "ui_om";
         else if (activeEl.id === "canvas_okurinushi") prefix = "ui_ok";
@@ -506,7 +610,8 @@
 
       const onMove = (e) => {
         if (!activeEl) return;
-        const dx = (e.clientX - startX) / (mmToPx * 0.8); // 0.8は表示用scale
+        // プレビューのscale(0.8)を考慮して移動距離を計算
+        const dx = (e.clientX - startX) / (mmToPx * 0.8);
         const dy = (e.clientY - startY) / (mmToPx * 0.8);
 
         let prefix = "";
@@ -518,13 +623,15 @@
         if (prefix) {
           const newX = Math.round(startValX + dx);
           const newY = Math.round(startValY + dy);
+          
           getEl(prefix + "_x").value = newX;
           getEl(prefix + "_y").value = newY;
-          // スライダーも同期
-          const r = getEl(prefix + "_x_r");
+          
+          // スライダーも連動
+          const rx = getEl(prefix + "_x_r");
           const ry = getEl(prefix + "_y_r");
-          if(r) r.value = newX;
-          if(ry) ry.value = newY;
+          if (rx) rx.value = newX;
+          if (ry) ry.value = newY;
           
           render();
         }
@@ -551,7 +658,9 @@
       getEl("ui_mizuhiki_sel").addEventListener("change", render);
       getEl("ui_paper_size").addEventListener("change", render);
       getEl("ui_print_scale").addEventListener("input", render);
-      getEl("btn_load_fonts").addEventListener("click", loadLocalFonts);
+      
+      getEl("btn_load_fonts").addEventListener("click", loadSystemFonts);
+      getEl("btn_manual_font").addEventListener("click", addManualFont);
 
       document.querySelectorAll(".ok-input").forEach(el => {
         el.addEventListener("input", render);
