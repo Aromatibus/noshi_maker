@@ -6,10 +6,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Antique&family=Hannari&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Antique&family=Hannari&family=Sawarabi+Mincho&family=Shippori+Mincho:wght@400;700&family=Klee+One:wght@400;600&family=Noto+Serif+JP:wght@400;700&display=swap"
     rel="stylesheet"
   >
-
+  
   <style>
     :root {
       --bg-color: #eee;
@@ -276,14 +276,21 @@
         <input id="ui_om_text" placeholder="内容入力">
         <span class="item-name">書体:</span>
         <select id="ui_font_sel" style="width:130px">
-          <optgroup label="Webフォント">
-            <option value="'Yuji Syuku', serif">Yuji Syuku</option>
-            <option value="'Zen Antique', serif">Zen Antique</option>
-            <option value="'Hannari', serif">Hannari</option>
+          <optgroup label="筆・楷書系（おすすめ）">
+            <option value="'Yuji Syuku', serif">Yuji Syuku (力強い毛筆)</option>
+            <option value="'Klee One', sans-serif">Klee One (端正な楷書風)</option>
           </optgroup>
-          <optgroup label="システムフォント" id="optgroup_system">
-            <!-- ここに追加される -->
+          <optgroup label="明朝体系（上品・高級）">
+            <option value="'Shippori Mincho', serif">しっぽり明朝 (非常に優雅)</option>
+            <option value="'Sawarabi Mincho', serif">さわらび明朝 (誠実・標準)</option>
+            <option value="'Noto Serif JP', serif">Noto Serif JP (現代的・綺麗)</option>
+            <option value="'Hannari', serif">Hannari (はんなり明朝)</option>
           </optgroup>
+          <optgroup label="システムフォント">
+            <option value="'Yu Mincho', '游明朝', serif">游明朝 (標準搭載・最高峰)</option>
+            <option value="'MS Mincho', 'MS 明朝', serif">MS 明朝</option>
+          </optgroup>
+          <optgroup label="その他" id="optgroup_system"></optgroup>
         </select>
         <button class="btn-sysfont" id="btn_manual_font">フォント手入力</button>
         <button class="btn-sysfont" id="btn_load_fonts">システム読込</button>
