@@ -188,16 +188,6 @@ select {
   border-radius: 4px;
 }
 
-.btn-sysfont {
-  background: #666;
-  color: #fff;
-  border: none;
-  padding: 3px 8px;
-  font-size: 10px;
-  cursor: pointer;
-  border-radius: 3px;
-}
-
 /* 印刷用設定 */
 @media print {
   @page { 

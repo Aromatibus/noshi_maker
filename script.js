@@ -80,36 +80,6 @@ const LIST_MIZUHIKI = [
 
 const getEl = (id) => document.getElementById(id);
 
-/** フォント機能 **/
-async function loadSystemFonts() {
-  if (!window.queryLocalFonts) {
-    alert("ブラウザがAPIに対応していないか、非セキュアな環境です。手入力を使用してください。");
-    return;
-  }
-  try {
-    const fonts = await window.queryLocalFonts();
-    const group = getEl("optgroup_system");
-    group.innerHTML = "";
-    const families = Array.from(new Set(fonts.map(f => f.family))).sort();
-    families.forEach(f => group.add(new Option(f, f)));
-    alert(families.length + "個のフォントを読み込みました。");
-  } catch (err) {
-    alert("フォントへのアクセスが拒否されました。");
-  }
-}
-
-function addManualFont() {
-  const name = prompt("PCに入っているフォント名を入力してください\n(例: MS Mincho, HG行書体, 游明朝)");
-  if (name) {
-    const group = getEl("optgroup_system");
-    const opt = new Option(name, name);
-    opt.style.fontFamily = name;
-    group.add(opt);
-    getEl("ui_font_sel").value = name;
-    render();
-  }
-}
-
 /** 初期化処理 **/
 function initSelectors() {
   const pSel = getEl("ui_purpose_sel");
@@ -149,15 +119,13 @@ function render() {
   const printScale = getEl("ui_print_scale").value / 100;
   paper.style.setProperty("--print-scale", printScale);
 
-  const currentFont = getEl("ui_font_sel").value;
-
   // 表書き
   const omView = getEl("canvas_omotegaki");
   omView.textContent = getEl("ui_om_text").value;
   omView.style.left = getEl("ui_om_x").value + "mm";
   omView.style.top = getEl("ui_om_y").value + "mm";
   omView.style.fontSize = getEl("ui_om_size").value + "px";
-  omView.style.fontFamily = currentFont;
+  omView.style.fontFamily = getEl("ui_om_font_sel").value;
 
   // 贈り主
   const okView = getEl("canvas_okurinushi");
@@ -168,7 +136,7 @@ function render() {
   okView.style.left = getEl("ui_ok_x").value + "mm";
   okView.style.top = getEl("ui_ok_y").value + "mm";
   okView.style.fontSize = getEl("ui_ok_size").value + "px";
-  okView.style.fontFamily = currentFont;
+  okView.style.fontFamily = getEl("ui_ok_font_sel").value;
 
   // 熨斗
   const nImg = getEl("noshi_img");
@@ -262,15 +230,13 @@ function initEvents() {
   });
 
   getEl("ui_om_text").addEventListener("input", render);
-  getEl("ui_font_sel").addEventListener("change", render);
+  getEl("ui_om_font_sel").addEventListener("change", render);
+  getEl("ui_ok_font_sel").addEventListener("change", render);
   getEl("ui_noshi_sel").addEventListener("change", render);
   getEl("ui_mizuhiki_sel").addEventListener("change", render);
   getEl("ui_paper_size").addEventListener("change", render);
   getEl("ui_print_scale").addEventListener("input", render);
   
-  getEl("btn_load_fonts").addEventListener("click", loadSystemFonts);
-  getEl("btn_manual_font").addEventListener("click", addManualFont);
-
   document.querySelectorAll(".ok-input").forEach(el => {
     el.addEventListener("input", render);
   });
